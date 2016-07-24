@@ -1,3 +1,51 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+$script_tools = <<SCRIPT
+  echo "Start installing tools..."
+    yum -y install net-tools wget zip unzip mc vim gitepel-release epel-release rpm-build rpmdevtools git
+  echo "Done."
+  
+SCRIPT
+
+$script_gitInstall = <<SCRIPT
+  echo "Installing Git..."
+    yum -y install curl openssh-server openssh-clients postfix cronie 
+    systemctl start postfix
+    systemctl enable postfix
+    lokkit -s http -s ssh
+    curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
+    yum -y install gitlab-ce
+    gitlab-ctl reconfigure
+  #Credentials: root/5iveL!fe
+    echo "Installing Git DONE..."
+SCRIPT
+
+
+
+#Provisioning the VM's
+    
+Vagrant.configure("2") do |config|
+  
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox", disabled: true
+  config.vm.provider :virtualbox do |vb|
+    	vb.gui = false
+    end
+  config.vm.define "gitserver" do |gitserver|
+     gitserver.vm.box = "bento/centos-7.2"
+     gitserver.vm.hostname = "gitserver"
+     gitserver.vm.network "forwarded_port", guest: 22, host: 6122, id: "ssh", auto_correct: true
+     gitserver.vm.network "private_network", ip: "192.168.56.101", virtualbox__hostonly: true
+     gitserver.vm.provision :shell, :inline => $script_tools
+     gitserver.vm.provision :shell, :inline => $script_gitInstall
+     gitserver.vm.provider "virtualbox" do |vm|
+      vm.name = "gitserver"
+			vm.customize [
+							'modifyvm', :id,
+							'--memory', '1536'
+							
+						]
+		end
+  end
+  
+end
