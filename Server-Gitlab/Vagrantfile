@@ -16,6 +16,7 @@ $script_gitInstall = <<SCRIPT
     lokkit -s http -s ssh
     curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
     yum -y install gitlab-ce
+    sed -i 's/gitserver/192.168.56.101/g' /etc/gitlab/gitlab.rb
     gitlab-ctl reconfigure
   #Credentials: root/5iveL!fe
     echo "Installing Git DONE..."
