@@ -1,0 +1,46 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+$script_installJDK = <<SCRIPT
+echo "Installing JDK:"
+wget -nv -O --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u102-b14/jdk-8u102-linux-x64.rpm
+yum -y install jdk-8u102-linux-x64.rpm
+rm -rf jdk-8u102-linux-x64.rpm
+SCRIPT
+
+$script_installJenkins = <<SCRIPT
+echo "Installing Jenkins 2.x: "
+  wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+  rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+  yum -y install jenkins
+  systemctl start jenkins
+  systemctl enable jenkins
+SCRIPT
+
+#Provisioning the VM's
+    
+Vagrant.configure("2") do |config|
+  
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox", disabled: true
+  config.vm.provider :virtualbox do |vb|
+    	vb.gui = false
+    end
+  config.vm.define "jenkins20" do |jenkins20|
+     jenkins20.vm.box = "bento/centos-7.2"
+     jenkins20.vm.hostname = "jenkins20"
+     jenkins20.vm.network "forwarded_port", guest: 22, host: 6123, id: "ssh", auto_correct: true
+     jenkins20.vm.network "private_network", ip: "192.168.56.102", virtualbox__hostonly: true
+     jenkins20.vm.provision :shell, :inline => $script_installJDK
+     jenkins20.vm.provision :shell, :inline => $script_installJenkins
+     jenkins20.vm.provider "virtualbox" do |vm|
+      vm.name = "jenkins20"
+			vm.customize [
+							'modifyvm', :id,
+							'--memory', '768'
+							
+						]
+		end
+  end
+  
+end

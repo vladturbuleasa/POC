@@ -23,7 +23,6 @@ $script_gitInstall = <<SCRIPT
 SCRIPT
 
 
-
 #Provisioning the VM's
     
 Vagrant.configure("2") do |config|
